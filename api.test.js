@@ -21,22 +21,30 @@ describe('RESTful API Tests', () => {
   }, 15000);
 
   // ---- Test 2: /api/users (POST) ----
-  it('POST /api/users → should add a new user', async () => {
-    const user = {
-      id: 555555,
-      first_name: 'Test',
-      last_name: 'User',
-      birthday: '1999-12-31'
-    };
-    const res = await request(app)
-      .post('/api/users')
-      .send(user)
-      .set('Content-Type', 'application/json');
-//vrify code status
-    expect([200, 201]).toContain(res.statusCode);
-    expect(res.body).toHaveProperty('id');   
-    expect(res.body).toHaveProperty('_id');  
-  }, 15000);
+// This test verifies that adding the predefined user 'mosh israeli' works correctly.
+// According to the project requirements, the DB should only contain one user (id=123123).
+it('POST /api/users → should add the main user (mosh israeli)', async () => {
+  const user = {
+    id: 123123,                    // fixed ID for the main user
+    first_name: 'mosh',            // required first name
+    last_name: 'israeli',          // required last name
+    birthday: '2000-01-01'         // sample birthday 
+  };
+
+  const res = await request(app)
+    .post('/api/users')            // endpoint to add new users
+    .send(user)                    // send JSON payload
+    .set('Content-Type', 'application/json');
+
+  // Verify HTTP status code is either 200 (OK) or 201 (Created)
+  expect([200, 201]).toContain(res.statusCode);
+
+  // Verify that the response body contains the correct properties
+  expect(res.body).toHaveProperty('id', 123123);
+  expect(res.body).toHaveProperty('first_name', 'mosh');
+  expect(res.body).toHaveProperty('last_name', 'israeli');
+  expect(res.body).toHaveProperty('birthday');
+}, 15000);
 
   // ---- Test 3: /api/users (list) ----
   it('GET /api/users → should return all users', async () => {

@@ -26,20 +26,26 @@ const app = express();
 // Initialize all configurations
 setupViewEngine(app);
 setupMiddleware(app);
-setupRoutes(app);
+setupRoutes(app);   // routes including health
 connectToMongoDB();
 setupNotFoundHandler(app);
 setupGlobalErrorHandler(app);
 
 module.exports = app;
 
-// Configure the template engine (Pug)
+/**
+ * Configure the template engine (Pug)
+ * Sets the view engine for rendering error pages if needed
+ */
 function setupViewEngine(app) {
     app.set('views', path.join(__dirname, 'views'));
     app.set('view engine', 'pug');
 }
 
-// Configure middleware for logging, parsing, static files, and logs
+/**
+ * Configure middleware for logging, parsing, static files, and logs
+ * Includes Morgan + Pino + saving logs to MongoDB
+ */
 function setupMiddleware(app) {
     app.use(logger('dev'));
     app.use(express.json());
@@ -61,8 +67,17 @@ function setupMiddleware(app) {
     });
 }
 
-// Setup API routes
+/**
+ * Setup API routes
+ * Includes a new /api/health route for Render health checks
+ */
 function setupRoutes(app) {
+    // Health check route
+    app.get('/api/health', (req, res) => {
+        res.status(200).send('Server is running');
+    });
+
+    // Register all other routers under /api
     app.use('/api', aboutRouter);
     app.use('/api', addRouter);
     app.use('/api', reportRouter);
@@ -70,7 +85,10 @@ function setupRoutes(app) {
     app.use('/api/logs', logsRouter);
 }
 
-// Connect to MongoDB Atlas
+/**
+ * Connect to MongoDB Atlas using Mongoose
+ * Reads connection string from environment variables
+ */
 function connectToMongoDB() {
     mongoose.connect(process.env.MONGODB_URI, {
         useNewUrlParser: true,
@@ -80,14 +98,20 @@ function connectToMongoDB() {
         .catch(err => loggerPino.error('❌ MongoDB connection error:', err));
 }
 
-// Handle not found routes
+/**
+ * Handle routes that are not found
+ * Creates a 404 error for unknown endpoints
+ */
 function setupNotFoundHandler(app) {
     app.use((req, res, next) => {
         next(createError(404));
     });
 }
 
-// Handle global errors
+/**
+ * Handle global errors
+ * Renders error page with details in development mode only
+ */
 function setupGlobalErrorHandler(app) {
     app.use((err, req, res, next) => {
         const isDev = req.app.get('env') === 'development';
